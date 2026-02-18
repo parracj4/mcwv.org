@@ -11,19 +11,32 @@ export default function HomePage() {
       {/* Hero */}
       <section className="hero">
         <div className="container">
-          <h1>
-            The Best Place in America for Advanced Manufacturing &amp; AI
-            Infrastructure
-          </h1>
-          <p className="hero-tagline">
-            Over $6 billion in active investment. Nucor, Frontieras, and the
-            Monarch Compute Campus all chose Mason County, West Virginia.
-            River, rail, highway, and up to 8 gigawatts of new dedicated power.
-            There is a reason the biggest names in industry keep landing here.
-          </p>
-          <Link href="/about/contact" className="cta-link">
-            Start a Conversation
-          </Link>
+          <div className="hero-layout">
+            <div className="hero-content">
+              <h1>
+                The Best Place in America for Advanced Manufacturing &amp; AI
+                Infrastructure
+              </h1>
+              <p className="hero-tagline">
+                Over $6 billion in active investment. Nucor, Frontieras, and the
+                Monarch Compute Campus all chose Mason County, West Virginia.
+                River, rail, highway, and up to 8 gigawatts of new dedicated power.
+                There is a reason the biggest names in industry keep landing here.
+              </p>
+              <Link href="/about/contact" className="cta-link">
+                Start a Conversation
+              </Link>
+            </div>
+            <div className="hero-logo">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/MCDA logo SVG.webp"
+                alt="Mason County Development Authority logo"
+                width={280}
+                height={280}
+              />
+            </div>
+          </div>
           <div className="hero-stats">
             <div>
               <div className="hero-stat-value">$6B+</div>
@@ -51,6 +64,28 @@ export default function HomePage() {
       <section className="section-alt">
         <div className="container">
           <h2 className="mb-3">Where We Are</h2>
+          <div className="location-maps">
+            <div className="location-map">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/USA wv outline SVG.webp"
+                alt="Map of the United States with West Virginia highlighted"
+                width={480}
+                height={320}
+              />
+              <span className="location-map-label">West Virginia in the U.S.</span>
+            </div>
+            <div className="location-map">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/mason co outline SVG.webp"
+                alt="Map of West Virginia with Mason County highlighted"
+                width={400}
+                height={400}
+              />
+              <span className="location-map-label">Mason County in West Virginia</span>
+            </div>
+          </div>
           <p style={{ fontSize: "1.125rem", maxWidth: "48rem", marginBottom: "1.5rem" }}>
             Mason County sits on the banks of the Ohio River in western West
             Virginia, at the confluence of the Ohio and Kanawha rivers. Point
