@@ -47,6 +47,43 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Where We Are */}
+      <section className="section-alt">
+        <div className="container">
+          <h2 className="mb-3">Where We Are</h2>
+          <p style={{ fontSize: "1.125rem", maxWidth: "48rem", marginBottom: "1.5rem" }}>
+            Mason County sits on the banks of the Ohio River in western West
+            Virginia, at the confluence of the Ohio and Kanawha rivers. Point
+            Pleasant, the county seat, is roughly 60 miles north of Charleston,
+            WV, and within a day&apos;s drive of Pittsburgh, Columbus, Charlotte,
+            and Washington, D.C.
+          </p>
+          <div className="card-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
+            <div className="card" style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--color-accent)" }}>60 mi</div>
+              <div>north of Charleston, WV</div>
+            </div>
+            <div className="card" style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--color-accent)" }}>170 mi</div>
+              <div>from Columbus, OH</div>
+            </div>
+            <div className="card" style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--color-accent)" }}>260 mi</div>
+              <div>from Pittsburgh, PA</div>
+            </div>
+            <div className="card" style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--color-accent)" }}>330 mi</div>
+              <div>from Washington, D.C.</div>
+            </div>
+          </div>
+          <p style={{ marginTop: "1rem", color: "var(--color-text-secondary)" }}>
+            Served by U.S. Route 35, the Ohio River inland waterway system, and
+            CSX Class I rail — connecting Mason County to the eastern seaboard,
+            the Gulf Coast, and the industrial Midwest.
+          </p>
+        </div>
+      </section>
+
       {/* Headline Investments */}
       <section className="section">
         <div className="container">
