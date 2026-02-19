@@ -199,7 +199,7 @@ export default function Sites() {
                       <div className="flex items-center gap-3 mb-2">
                         <h2 className="font-serif text-2xl text-cream">{site.name}</h2>
                         <span
-                          className={`px-3 py-1 rounded-full text-sm border ${
+                          className={`px-3 py-1 rounded-full text-sm border text-center whitespace-nowrap ${
                             statusColors[site.status]
                           }`}
                         >
