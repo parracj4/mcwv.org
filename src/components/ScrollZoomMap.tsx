@@ -43,14 +43,23 @@ function easeInOutCubic(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
+// Lerp speed — higher = snappier, lower = smoother (0.06–0.12 is a good range)
+const LERP_SPEED = 0.08;
+
 export default function ScrollZoomMap() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const topoDataRef = useRef<TopoJSON | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
-  const lastProgressRef = useRef<number>(-1);
-  const [progress, setProgress] = useState(0);
+  const featuresRef = useRef<GeoFeature[] | null>(null);
+  const loopRef = useRef<number | null>(null);
+
+  // Scroll target (updated by scroll handler — cheap)
+  const targetProgressRef = useRef(0);
+  // Smoothly interpolated current value (used for rendering)
+  const currentProgressRef = useRef(0);
+
+  const [displayProgress, setDisplayProgress] = useState(0);
 
   // Convert TopoJSON arc to coordinates
   const arcToCoordinates = useCallback(
@@ -85,9 +94,11 @@ export default function ScrollZoomMap() {
     []
   );
 
-  // Convert TopoJSON to GeoJSON features
+  // Convert TopoJSON to GeoJSON features (cached)
   const topoToGeo = useCallback(
     (topo: TopoJSON): GeoFeature[] => {
+      if (featuresRef.current) return featuresRef.current;
+
       const features: GeoFeature[] = [];
       const states = topo.objects.states;
 
@@ -119,6 +130,7 @@ export default function ScrollZoomMap() {
         });
       }
 
+      featuresRef.current = features;
       return features;
     },
     [arcToCoordinates]
@@ -190,26 +202,21 @@ export default function ScrollZoomMap() {
       const easedProgress = easeInOutCubic(prog);
 
       // Smart scaling based on aspect ratio
-      // US map is ~1.8x wider than tall, so:
-      // - Landscape: constrained by height, scale based on height
-      // - Portrait: constrained by width, scale based on width
       const aspectRatio = width / height;
       const isLandscape = aspectRatio > 1;
 
       // Calculate scale to fill screen with US (minimal ocean)
       const baseScale = isLandscape ? height * 2.0 : width * 1.3;
       // Final zoom based on height ensures consistent vertical visible range
-      // across all screen sizes (same amount of states visible north-to-south)
       const maxScale = height * 6;
       const scale = baseScale + (maxScale - baseScale) * easedProgress;
 
       // Pan to Mason County FASTER than zoom increases so WV stays visible
-      // Center reaches WV at ~50% scroll, remaining scroll just zooms in
       const panProgress = Math.min(1, easedProgress * 2);
       const centerLon = US_CENTER[0] + (WV_CENTER[0] - US_CENTER[0]) * panProgress;
       const centerLat = US_CENTER[1] + (WV_CENTER[1] - US_CENTER[1]) * panProgress;
 
-      // Convert TopoJSON to GeoJSON features
+      // Get cached features
       const features = topoToGeo(topoData);
 
       // Shift map upward as zoom progresses so WV sits above text
@@ -317,7 +324,6 @@ export default function ScrollZoomMap() {
       ctx.restore();
 
       // Position text overlay directly below WV's southern border
-      // WV southern tip is approx lat 37.2 at lon -80.6
       const [, wvSouthY] = projectAlbersUSA(
         -80.6, 37.2, width, height, scale, centerLon, centerLat
       );
@@ -328,33 +334,6 @@ export default function ScrollZoomMap() {
     },
     [topoToGeo, projectAlbersUSA]
   );
-
-  // Handle scroll
-  const handleScroll = useCallback(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const rect = container.getBoundingClientRect();
-    const scrollHeight = container.offsetHeight - window.innerHeight;
-    const scrolled = -rect.top;
-    const rawProgress = Math.max(0, Math.min(1, scrolled / scrollHeight));
-
-    // Quantize progress for performance
-    const quantizedProgress = Math.round(rawProgress * 100) / 100;
-
-    if (quantizedProgress !== lastProgressRef.current) {
-      lastProgressRef.current = quantizedProgress;
-      setProgress(quantizedProgress);
-
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-
-      animationFrameRef.current = requestAnimationFrame(() => {
-        drawMap(quantizedProgress);
-      });
-    }
-  }, [drawMap]);
 
   // Handle resize
   const handleResize = useCallback(() => {
@@ -367,10 +346,42 @@ export default function ScrollZoomMap() {
     canvas.style.width = `${window.innerWidth}px`;
     canvas.style.height = `${window.innerHeight}px`;
 
-    drawMap(lastProgressRef.current >= 0 ? lastProgressRef.current : 0);
+    drawMap(currentProgressRef.current);
   }, [drawMap]);
 
   useEffect(() => {
+    // Scroll handler — only updates target, no rendering
+    const handleScroll = () => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+      const scrollHeight = container.offsetHeight - window.innerHeight;
+      const scrolled = -rect.top;
+      targetProgressRef.current = Math.max(0, Math.min(1, scrolled / scrollHeight));
+    };
+
+    // Continuous animation loop — lerps toward target and redraws
+    const tick = () => {
+      const target = targetProgressRef.current;
+      const current = currentProgressRef.current;
+      const diff = target - current;
+
+      // Only redraw if we haven't converged yet
+      if (Math.abs(diff) > 0.0005) {
+        const next = current + diff * LERP_SPEED;
+        currentProgressRef.current = next;
+
+        // Update React state for text opacity (throttled to avoid excessive re-renders)
+        const rounded = Math.round(next * 200) / 200;
+        setDisplayProgress(rounded);
+
+        drawMap(next);
+      }
+
+      loopRef.current = requestAnimationFrame(tick);
+    };
+
     // Load TopoJSON data
     fetch("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json")
       .then((res) => res.json())
@@ -378,26 +389,27 @@ export default function ScrollZoomMap() {
         topoDataRef.current = data;
         handleResize();
         handleScroll();
+        // Start animation loop after data loads
+        loopRef.current = requestAnimationFrame(tick);
       })
       .catch(console.error);
 
-    // Set up event listeners
     window.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("resize", handleResize, { passive: true });
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", handleResize);
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
+      if (loopRef.current) {
+        cancelAnimationFrame(loopRef.current);
       }
     };
-  }, [handleScroll, handleResize]);
+  }, [drawMap, handleResize]);
 
-  // Calculate text opacities based on progress
-  const introOpacity = Math.max(0, 1 - progress * 4);
-  const finalOpacity = Math.max(0, Math.min(1, (progress - 0.7) * 4));
-  const scrollIndicatorOpacity = Math.max(0, 1 - progress * 5);
+  // Calculate text opacities based on smoothed progress
+  const introOpacity = Math.max(0, 1 - displayProgress * 4);
+  const finalOpacity = Math.max(0, Math.min(1, (displayProgress - 0.7) * 4));
+  const scrollIndicatorOpacity = Math.max(0, 1 - displayProgress * 5);
 
   return (
     <div ref={containerRef} className="relative h-[150vh]">
@@ -410,7 +422,7 @@ export default function ScrollZoomMap() {
 
         {/* Intro text - visible at start */}
         <div
-          className="absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300"
+          className="absolute inset-0 flex items-center justify-center pointer-events-none"
           style={{ opacity: introOpacity }}
         >
           <div className="text-center px-4 max-w-4xl">
@@ -426,7 +438,7 @@ export default function ScrollZoomMap() {
         {/* Final text - Mason County */}
         <div
           ref={textRef}
-          className="absolute inset-x-0 flex flex-col items-center pointer-events-none transition-opacity duration-300"
+          className="absolute inset-x-0 flex flex-col items-center pointer-events-none"
           style={{ opacity: finalOpacity, top: '65%' }}
         >
           <div className="text-center px-4 max-w-4xl">
@@ -448,10 +460,13 @@ export default function ScrollZoomMap() {
           </div>
         </div>
 
-        {/* Scroll indicator */}
+        {/* Scroll indicator — pushed above iPhone home bar */}
         <div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-gold/60 transition-opacity duration-300"
-          style={{ opacity: scrollIndicatorOpacity }}
+          className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-gold/60"
+          style={{
+            opacity: scrollIndicatorOpacity,
+            bottom: "max(2rem, calc(1.5rem + env(safe-area-inset-bottom)))",
+          }}
         >
           <span className="text-sm font-sans uppercase tracking-widest">
             Scroll to explore
