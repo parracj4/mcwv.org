@@ -412,7 +412,7 @@ export default function ScrollZoomMap() {
   const scrollIndicatorOpacity = Math.max(0, 1 - displayProgress * 5);
 
   return (
-    <div ref={containerRef} className="relative h-[150vh]">
+    <div ref={containerRef} className="relative h-[135vh]">
       <div className="sticky top-0 h-screen overflow-hidden">
         <canvas
           ref={canvasRef}
@@ -448,15 +448,9 @@ export default function ScrollZoomMap() {
             <p className="font-serif text-lg sm:text-xl md:text-2xl text-cream/60 mb-4">
               West Virginia
             </p>
-            <p className="font-sans text-lg sm:text-xl md:text-2xl text-cream/80 mb-8">
+            <p className="font-sans text-lg sm:text-xl md:text-2xl text-cream/80">
               $6 billion in active investment and growing
             </p>
-            <a
-              href="#content"
-              className="inline-block px-8 py-4 bg-gold text-navy font-sans font-semibold rounded-lg hover:bg-gold-light transition-colors pointer-events-auto"
-            >
-              Explore Our Opportunities
-            </a>
           </div>
         </div>
 
