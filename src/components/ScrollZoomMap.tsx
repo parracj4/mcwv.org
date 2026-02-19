@@ -396,7 +396,6 @@ export default function ScrollZoomMap() {
 
   // Calculate text opacities based on progress
   const introOpacity = Math.max(0, 1 - progress * 4);
-  const midOpacity = progress > 0.2 && progress < 0.6 ? Math.min(1, (progress - 0.2) * 5, (0.6 - progress) * 5) : 0;
   const finalOpacity = Math.max(0, Math.min(1, (progress - 0.7) * 4));
   const scrollIndicatorOpacity = Math.max(0, 1 - progress * 5);
 
@@ -420,21 +419,6 @@ export default function ScrollZoomMap() {
             </h1>
             <p className="font-sans text-lg sm:text-xl md:text-2xl text-gold-light">
               for Advanced Manufacturing &amp; AI Infrastructure
-            </p>
-          </div>
-        </div>
-
-        {/* Mid text - West Virginia highlight */}
-        <div
-          className="absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300"
-          style={{ opacity: midOpacity }}
-        >
-          <div className="text-center px-4 max-w-4xl">
-            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-gold mb-4">
-              West Virginia
-            </h2>
-            <p className="font-sans text-lg sm:text-xl md:text-2xl text-cream/80">
-              5th in the nation for energy production
             </p>
           </div>
         </div>
