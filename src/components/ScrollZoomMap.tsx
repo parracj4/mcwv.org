@@ -460,13 +460,10 @@ export default function ScrollZoomMap() {
           </div>
         </div>
 
-        {/* Scroll indicator — pushed above iPhone home bar */}
+        {/* Scroll indicator — bottom-20 (80px) clears iPhone home bar */}
         <div
-          className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-gold/60"
-          style={{
-            opacity: scrollIndicatorOpacity,
-            bottom: "max(2rem, calc(1.5rem + env(safe-area-inset-bottom)))",
-          }}
+          className="absolute bottom-20 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-gold"
+          style={{ opacity: scrollIndicatorOpacity }}
         >
           <span className="text-sm font-sans uppercase tracking-widest">
             Scroll to explore
